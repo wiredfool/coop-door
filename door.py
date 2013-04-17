@@ -41,6 +41,7 @@
 
 from RPi import GPIO
 import time
+import json
 
 def dbg(s):
     print s
@@ -68,7 +69,8 @@ inputs = {
 class door(object):
     """ state machine to control the door """
 
-    def __init__(self):
+    def __init__(self, controller):
+        self.controller = controller
         self.state = None
         self.op = None
         self.out_state = dict((k,False) for k in outputs)
@@ -216,6 +218,13 @@ class door(object):
         dbg('setting direction %s, %s' %(val, val == UP))
         GPIO.output(outputs['direction'],  val == UP)
             
+    #
+    # Reporting
+    # 
+
+    def status(self):
+        return json.dumps({'state': self.state,
+                           'operation': self.op})
 
 
 

@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.wiredfool.coop
+Exec=/usr/bin/python /home/erics/coop-door/door-server.py
+User=root
