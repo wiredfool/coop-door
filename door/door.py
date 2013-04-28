@@ -43,8 +43,11 @@ from RPi import GPIO
 import time
 import json
 
+import syslog
+
 def dbg(s):
-    print s
+    #print s
+    syslog.syslog(s)
 
 # States
 OPEN, CLOSED, OPENING, CLOSING, STOPPED, ERROR = 'open', 'closed', 'opening', 'closing', 'stopped', 'error'
