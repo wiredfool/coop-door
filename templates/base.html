@@ -3,9 +3,15 @@ $def with (page, title=None)
 <title>Door Controller
 $if title: : $title\
 </title>
+<style>
+form {
+   display: inline;
+}
+</style>
 </head><body>
 $:page   
 
+<div>
 <form action='/stop' method='post'>
 <input type='submit' value='Stop'>
 </form>
@@ -18,4 +24,9 @@ $:page
 <input type='submit' value='Close'>
 </form>
 
+<form action='/reload' method='post'>
+<input type='submit' value='Reload'>
+</form>
+
+</div>
 </body></html>
