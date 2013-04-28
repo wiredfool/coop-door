@@ -150,6 +150,7 @@ class door(object):
     def dispatch(self, event, *args):
         """ Calls the appropriate operation for the current state and event """
         dbg( "dispatch event: %s " % event)
+        self.op = callable(self.map.get(self.state).get(event, False)) and event
         self.map.get(self.state).get(event, self.noop)(*args)
     
     def permit(self, event):
@@ -226,8 +227,11 @@ class door(object):
     # 
 
     def status(self):
-        return json.dumps({'state': self.state,
-                           'operation': self.op})
+        stat = {'state': self.state,
+                'operation': self.op}
+        for name,pin in inputs.items():
+            stat[name] = GPIO.input(pin)
+        return json.dumps(stat)
 
 
 
