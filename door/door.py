@@ -63,9 +63,9 @@ outputs = {
 
 inputs = {
     'upper':22,
-    'lower': 25,
-    'up': 18,
-    'down': 19,
+    'lower': 18,
+    'up': 25,
+    'down': 17,
 }
 
 
