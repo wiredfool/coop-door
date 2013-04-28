@@ -24,3 +24,5 @@ def stop():
     return server.stop()
 def reload():
     return server.reload()
+def unload():
+    return server.cleanup()

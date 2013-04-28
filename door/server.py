@@ -37,6 +37,7 @@ class remote(dbus.service.Object):
         reload(door)
         self.door = door.door(self)
 
+    @dbus.service.method('com.wiredfool.coop', in_signature='', out_signature='')
     def cleanup(self):
         return self.door.cleanup()
 
