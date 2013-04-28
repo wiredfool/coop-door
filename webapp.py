@@ -6,7 +6,8 @@ urls = (
     '/', 'index',
     '/open', 'open_door',
     '/close', 'close_door',
-    '/stop', 'stop'
+    '/stop', 'stop',
+    '/reload', 'reloader',
     )
 
 from door import client
@@ -38,7 +39,7 @@ class stop:
         client.stop()
         raise web.seeother('/')
 
-class reload:
+class reloader:
     def POST(self):
         client.reload()
         raise web.seeother('/')
