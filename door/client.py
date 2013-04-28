@@ -22,4 +22,5 @@ def close():
     return server.close()
 def stop():
     return server.stop()
-
+def reload():
+    return server.reload()

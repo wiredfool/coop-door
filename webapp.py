@@ -38,6 +38,11 @@ class stop:
         client.stop()
         raise web.seeother('/')
 
+class reload:
+    def POST(self):
+        client.reload()
+        raise web.seeother('/')
+    
 if __name__ == "__main__":
     app = web.application(urls, globals())
     app.internalerror = web.debugerror

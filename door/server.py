@@ -31,7 +31,14 @@ class remote(dbus.service.Object):
     def status(self):
         return self.door.status()
 
+    @dbus.service.method('com.wiredfool.coop', in_signature='', out_signature='')
+    def reload(self):
+        self.door.cleanup()
+        reload(door)
+        self.door = door.door(self)
 
+    def cleanup(self):
+        return self.door.cleanup()
 
 if __name__=='__main__':
     from dbus.mainloop.glib import DBusGMainLoop
@@ -46,5 +53,6 @@ if __name__=='__main__':
         print "Exception in main loop: %s" % msg
     finally:
         r.stop()
+        r.cleanup()
         loop.quit()
 
