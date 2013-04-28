@@ -75,7 +75,6 @@ class door(object):
     def __init__(self, controller):
         self.controller = controller
         self.state = None
-        self.op = None
         self.out_state = dict((k,False) for k in outputs)
         
         """ state: {Event:op} """
@@ -150,7 +149,6 @@ class door(object):
     def dispatch(self, event, *args):
         """ Calls the appropriate operation for the current state and event """
         dbg( "dispatch event: %s " % event)
-        self.op = callable(self.map.get(self.state).get(event, False)) and event
         self.map.get(self.state).get(event, self.noop)(*args)
     
     def permit(self, event):
@@ -182,6 +180,7 @@ class door(object):
     #
     def open(self):
         """ initiates opening the door """
+        dbg('command: open')
         if self.permit(UP):
             dbg('Opening')
             self._direction(UP)
@@ -190,6 +189,7 @@ class door(object):
 
     def close(self):
         """ initiates closing the door """
+        dbg('command: close')
         if self.permit(DOWN):
             dbg('Closing')
             self._direction(DOWN)
@@ -227,8 +227,7 @@ class door(object):
     # 
 
     def status(self):
-        stat = {'state': self.state,
-                'operation': self.op}
+        stat = {'state': self.state}
         for name,pin in inputs.items():
             stat[name] = GPIO.input(pin)
         return json.dumps(stat)
