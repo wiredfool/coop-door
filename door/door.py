@@ -118,8 +118,8 @@ class door(object):
             function which then calls the callback """
 
         def fn(*args, **kwargs):
-            time.sleep(delay)
             dbg("debounce %s" %args)
+            time.sleep(delay)
             return cb(*args, **kwargs)
         return fn
 
@@ -128,8 +128,9 @@ class door(object):
         def fn(pin, *args, **kwargs):
             dbg("ifhigh %s "% (pin))
             if GPIO.input(pin):
-                dbg("calling callback")
+                dbg("pin %s high, calling callback" %pin)
                 return cb(pin, *args, **kwargs)
+            dbg("pin %s low, not calling" %pin)
         return fn
 
     def reset_state(self):
