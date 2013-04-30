@@ -39,7 +39,7 @@
       
 """
 
-from RPi import GPIO
+import RPIO as GPIO
 import time
 import json
 
@@ -72,9 +72,11 @@ inputs = {
 class door(object):
     """ state machine to control the door """
 
-    def __init__(self, controller):
+    def __init__(self, controller, thread=True, port=None):
         self.controller = controller
         self.state = None
+        self.thread = thread
+        self.port = port
         self.out_state = dict((k,False) for k in outputs)
         
         """ state: {Event:op} """
@@ -91,8 +93,18 @@ class door(object):
                               DOWN: self.close, },
                      None: {}
                      }
+
+        self.commands = {
+            'open': self.open,
+            'close': self.close,
+            'stop': self.stop,
+            'status': self.status,
+            }
+        
         self.setup()
         self.reset_state()
+        if self.thread:
+            self.run()
 
     def setup(self):
         GPIO.setmode(GPIO.BCM)
@@ -103,14 +115,22 @@ class door(object):
         for (name, pin) in inputs.items():
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)        
             
-            GPIO.add_event_detect(pin, GPIO.BOTH, 
-                                  self._debounce(0.01,self._ifhigh(getattr(self,name))), 100)
+            GPIO.add_interrupt_callback(pin,
+                                        getattr(self,name),
+                                        edge='rising',
+                                        debounce_timeout_ms=100)
+        if self.port:
+            GPIO.add_tcp_callback(self.port, self.command_dispatch)
 
+    def run(self):
+        GPIO.wait_for_interrupts(threaded=self.thread)
+        
     def cleanup(self):
         """Call on unload so that the raspberry pi releases its gpio pins"""
         GPIO.cleanup()
         for pin in inputs.values():
-            GPIO.remove_event_detect(pin)
+            GPIO.del_interrupt_callback(pin)
+        RPIO.stop_waiting_for_interrupts()
 
     def _debounce(self,delay, cb):
         """ Empirically determined that we need a delay to be able to read
@@ -147,10 +167,20 @@ class door(object):
         # can't be a lambda because of the function signature
         pass
 
-    def dispatch(self, event, *args):
+    def event_dispatch(self, event, *args):
         """ Calls the appropriate operation for the current state and event """
-        dbg( "dispatch event: %s " % event)
+        dbg( "event dispatch: %s " % event)
         self.map.get(self.state).get(event, self.noop)(*args)
+
+    def command_dispatch(self, socket, msg):
+        """ calls the appropriate command """
+        msg = msg.strip().lower()
+        ret = self.commands.get(msg, self.noop)()
+        dbg('command dispatch: %s -> %s' %(msg,ret))
+        if ret == None: return socket.send('Unknown\n')
+        if ret == True: return socket.send('Ok\n')
+        if ret == False: return socket.send('Incorrect State\n')
+        if ret: return socket.send(ret+'\n')
     
     def permit(self, event):
         """ Is the event allowable in this state """
@@ -159,22 +189,22 @@ class door(object):
     #
     # Input Callbacks
     #
-    def upper(self, pin):
+    def upper(self, pin, val=None):
         """ Upper limit switch callback """
-        self.dispatch(UPPER)
+        self.event_dispatch(UPPER)
 
-    def lower(self, pin):
+    def lower(self, pin, val=None):
         """ Lower limit switch callback """
-        self.dispatch(LOWER)
+        self.event_dispatch(LOWER)
 
-    def up(self, pin):
+    def up(self, pin, val=None):
         """ Up direction command switch """
         # undone -- should the other edge for up stop?
-        self.dispatch(UP)
+        self.event_dispatch(UP)
 
-    def down(self, pin):
+    def down(self, pin, val=None):
         """ Down direction command switch """
-        self.dispatch(DOWN)
+        self.event_dispatch(DOWN)
 
     #
     # Operations
@@ -187,6 +217,8 @@ class door(object):
             self._direction(UP)
             self._power(ON)
             self.state = OPENING
+            return True
+        return False
 
     def close(self):
         """ initiates closing the door """
@@ -196,6 +228,8 @@ class door(object):
             self._direction(DOWN)
             self._power(ON)
             self.state = CLOSING
+            return True
+        return False
 
     def stop(self): 
         """ Stops the current operations, shuts down power to the outputs. """
@@ -203,6 +237,7 @@ class door(object):
         self._power(OFF)
         self._direction(OFF)
         self.reset_state()
+        return True
 
     def error(self):
         dbg('ERROR, turning it off')
@@ -234,4 +269,6 @@ class door(object):
         return json.dumps(stat)
 
 
-
+if __name__=='__main__':
+    d = door(None, False, 8953)
+    d.run()

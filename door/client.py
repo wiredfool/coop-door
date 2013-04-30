@@ -1,28 +1,37 @@
 """
 
-Client side interface to the dbus connection to the coop door
+Client side interface via tcp to the coop door
 
 """
 
+import socket
+import multiprocessing
 
-import dbus
-sys_bus = dbus.SystemBus()
+sock = None
+sock_lock = multiprocessing.Lock()
 
-# This is in a module so that we're not making multiple
-# copies/versions of this when we run it under web.py
+def _send(msg):
+    if sock:
+        with sock_lock:
+            sock.sendall(msg)
+            return sock.recv(1024)
+    return False
 
-raw_server = sys_bus.get_object('com.wiredfool.coop', '/door')
-server = dbus.Interface(raw_server, 'com.wiredfool.coop')
+def connect():
+    global sock
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(('127.0.0.1', 8953))
+
 
 def status():
-    return server.status()
+    return _send('status\n')
 def open():
-    return server.open()
+    return _send('open\n')
 def close():
-    return server.close()
+    return _send('close\n')
 def stop():
-    return server.stop()
+    return _send('stop\n')
 def reload():
-    return server.reload()
+    return _send('reload\n')
 def unload():
-    return server.cleanup()
+    return _send('cleanup\n')

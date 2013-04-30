@@ -11,6 +11,7 @@ urls = (
     )
 
 from door import client
+client.connect()
 
 cache = False
 t_globals = dict()
