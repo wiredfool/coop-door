@@ -1,2 +1,3 @@
 RPi.GPIO==0.5.2a
 web.py==0.37
+RPIO==0.10.0
