@@ -77,10 +77,10 @@ inputs = {
 class door(object):
     """ state machine to control the door """
 
-    def __init__(self, controller, thread=True, port=None):
+    def __init__(self, controller, use_thread=True, port=None):
         self.controller = controller
         self.state = None
-        self.thread = thread
+        self.use_thread = use_thread
         self.port = port
         self.out_state = dict((k,False) for k in outputs)
         
@@ -108,7 +108,7 @@ class door(object):
         
         self.setup()
         self.reset_state()
-        if self.thread:
+        if self.use_thread:
             self.run()
 
     def setup(self):
@@ -132,7 +132,7 @@ class door(object):
     def run(self):
         while True:
             try:
-                GPIO.wait_for_interrupts(threaded=self.thread)
+                GPIO.wait_for_interrupts(threaded=self.use_thread)
             except IOError:
                 # interrupted system call
                 pass
