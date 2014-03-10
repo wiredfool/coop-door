@@ -85,18 +85,18 @@ class door(object):
         self.out_state = dict((k,False) for k in outputs)
         
         """ state: {Event:op} """
-        self.map = { OPEN: { DOWN: self.close, } ,
+        self.map = { OPEN:    { DOWN:  self.close, },
                      CLOSING: { LOWER: self.stop, 
                                 UPPER: self.error,
-                                UP: self.open,  },
-                     CLOSED: { UP: self.open, },
+                                UP:    self.open,  },
+                     CLOSED:  { UP:    self.open,  },
                      OPENING: { UPPER: self.stop,
-                                DOWN: self.close, },
-                     STOPPED: { UP: self.open, 
-                                DOWN: self.close, },
-                     ERROR: { UP: self.open, 
-                              DOWN: self.close, },
-                     None: {}
+                                DOWN:  self.close, },
+                     STOPPED: { UP:    self.open, 
+                                DOWN:  self.close, },
+                     ERROR:   { UP:    self.open, 
+                                DOWN:  self.close, },
+                     None:    {}
                      }
 
         self.commands = {
