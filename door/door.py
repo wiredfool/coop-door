@@ -115,7 +115,9 @@ class door(object):
         GPIO.setmode(GPIO.BCM)
         for pin in outputs.values():
             GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, False)
+            
+        self._power(False)
+        self._direction(False)
 
         for (name, pin) in inputs.items():
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)        
@@ -128,14 +130,22 @@ class door(object):
             GPIO.add_tcp_callback(self.port, self.command_dispatch)
 
     def run(self):
-        GPIO.wait_for_interrupts(threaded=self.thread)
+        while True:
+            try:
+                GPIO.wait_for_interrupts(threaded=self.thread)
+            except IOError:
+                # interrupted system call
+                pass
+            except KeyboardInterrupt:
+                #ctrl-c
+                break
         
     def cleanup(self):
         """Call on unload so that the raspberry pi releases its gpio pins"""
         GPIO.cleanup()
         for pin in inputs.values():
             GPIO.del_interrupt_callback(pin)
-        RPIO.stop_waiting_for_interrupts()
+        GPIO.stop_waiting_for_interrupts()
 
     def _debounce(self,delay, cb):
         """ Empirically determined that we need a delay to be able to read
@@ -256,7 +266,7 @@ class door(object):
     def _power(self, val):
         """ Control the power to the mosfet, true=on/false=off"""
         dbg("setting power %s"%val)
-        GPIO.output(outputs['power'], val)
+        GPIO.output(outputs['power'], not val)
         
     def _direction(self, val):
         """ set the direction relay """
