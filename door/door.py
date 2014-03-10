@@ -192,10 +192,14 @@ class door(object):
         msg = msg.strip().lower()
         ret = self.commands.get(msg, self.noop)()
         dbg('command dispatch: %s -> %s' %(msg,ret))
-        if ret == None: return socket.send('Unknown\n')
-        if ret == True: return socket.send('Ok\n')
-        if ret == False: return socket.send('Incorrect State\n')
+        if ret == None: return self.response(socket, 'Error')
+        if ret == True: return self.response(socket, 'Ok') 
+        if ret == False: return self.response(socket, 'Incorrect State')
         if ret: return socket.send(ret+'\n')
+
+    def response(self, socket, msg):
+        socket.send(msg + '\n')
+        socket.send(self.status() + '\n')
     
     def permit(self, event):
         """ Is the event allowable in this state """
