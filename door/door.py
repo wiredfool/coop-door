@@ -291,3 +291,4 @@ class door(object):
 if __name__=='__main__':
     d = door(None, False, 8953)
     d.run()
+    d.cleanup()
