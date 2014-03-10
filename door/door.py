@@ -40,6 +40,11 @@
 """
 
 import RPIO as GPIO
+
+# restrict to localhost.
+from RPIO import _RPIO
+_RPIO._TCP_SOCKET_HOST = '127.0.0.1'
+
 import time
 import json
 
