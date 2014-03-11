@@ -7,6 +7,9 @@ Client side interface via tcp to the coop door
 import socket
 import multiprocessing
 
+PORT = 8953
+HOST = '127.0.0.1'
+
 sock = None
 sock_lock = multiprocessing.Lock()
 
@@ -19,8 +22,18 @@ def _send(msg):
 
 def connect():
     global sock
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(('127.0.0.1', 8953))
+    sock = _connect()
+
+def status_socket():
+    s = _connect()
+    s.sendall('enroll\n')
+    return s
+
+def _connect():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+    return s
+
 
 
 def status():
