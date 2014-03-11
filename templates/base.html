@@ -1,7 +1,5 @@
-$def with (page, title=None)
 <html><head>
 <title>Door Controller
-$if title: : $title\
 </title>
 <style>
 form {
@@ -9,7 +7,7 @@ form {
 }
 </style>
 </head><body>
-$:page   
+{{ page }}
 
 <div>
 <form action='/stop' method='post'>
