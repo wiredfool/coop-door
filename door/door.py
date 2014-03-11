@@ -83,6 +83,8 @@ class door(object):
         self.use_thread = use_thread
         self.port = port
         self.out_state = dict((k,False) for k in outputs)
+
+        self.status_sockets = set()
         
         """ state: {Event:op} """
         self.map = { OPEN:    { DOWN:  self.close, },
@@ -104,6 +106,7 @@ class door(object):
             'close': self.close,
             'stop': self.stop,
             'status': self.status,
+            'enroll': self.enroll,
             }
         
         self.setup()
@@ -186,20 +189,46 @@ class door(object):
         """ Calls the appropriate operation for the current state and event """
         dbg( "event dispatch: %s " % event)
         self.map.get(self.state).get(event, self.noop)(*args)
+        self.notify_enrolled(self.status())
+        
+    def notify_enrolled(self, status):
+        """ Notifies all of the listening status connections of the
+        current status of the system."""
+
+        # Undone -- delegate this to a different thread.
+        # this is not realtime priority, and I don't want to
+        # delay any of the gpio events
+        err = []
+        dbg('Updating %d sockets with status' % len(self.status_sockets))
+        for sock in self.status_sockets:
+            try:
+                sock.sendall("Status\n"+status)
+            except:
+                dbg('Error sending to socket: removing')
+                err.append(sock)
+                
+        [self.status_sockets.remove(sock) for sock in err]
 
     def command_dispatch(self, socket, msg):
         """ calls the appropriate command """
         msg = msg.strip().lower()
-        ret = self.commands.get(msg, self.noop)()
+        ret = self.commands.get(msg, self.noop)(**{'socket':socket})
         dbg('command dispatch: %s -> %s' %(msg,ret))
         if ret == None: return self.response(socket, 'Error')
         if ret == True: return self.response(socket, 'Ok') 
         if ret == False: return self.response(socket, 'Incorrect State')
-        if ret: return socket.send(ret+'\n')
+        if ret: return socket.send("Status\n"+ret+'\n')
 
     def response(self, socket, msg):
-        socket.send(msg + '\n')
-        socket.send(self.status() + '\n')
+        status = self.status()
+        try:
+            socket.sendall(msg + '\n' + self.status() + '\n')
+        except Exception, msg:
+            # error sending to the socket,
+            dbg.log("Exception sending response: %s"%msg)
+            socket.setblocking(0)
+            
+        self.notify_enrolled(status)
     
     def permit(self, event):
         """ Is the event allowable in this state """
@@ -228,7 +257,7 @@ class door(object):
     #
     # Operations
     #
-    def open(self):
+    def open(self, *args, **kwargs):
         """ initiates opening the door """
         dbg('command: open')
         if self.permit(UP):
@@ -239,7 +268,7 @@ class door(object):
             return True
         return False
 
-    def close(self):
+    def close(self, *args, **kwargs):
         """ initiates closing the door """
         dbg('command: close')
         if self.permit(DOWN):
@@ -250,7 +279,7 @@ class door(object):
             return True
         return False
 
-    def stop(self): 
+    def stop(self, *args, **kwargs): 
         """ Stops the current operations, shuts down power to the outputs. """
         dbg ('stopping')
         self._power(OFF)
@@ -258,12 +287,20 @@ class door(object):
         self.reset_state()
         return True
 
-    def error(self):
+    def error(self, *args, **kwargs):
         dbg('ERROR, turning it off')
         self._power(OFF)
         self._direction(OFF)
         self.state = ERROR
 
+    def enroll(self, socket=None,*args, **kwargs):
+        "Adds the socket to the status broadcasts"
+        dbg('Enrolling a socket: %s' %socket)
+        if socket is not None:
+            self.status_sockets.add(socket)
+            socket.setblocking(0)
+            return True
+        return False
     #
     # Power Control Functions
     # 
@@ -281,7 +318,7 @@ class door(object):
     # Reporting
     # 
 
-    def status(self):
+    def status(self, *args, **kwargs):
         stat = {'state': self.state}
         for name,pin in inputs.items():
             stat[name] = GPIO.input(pin)
