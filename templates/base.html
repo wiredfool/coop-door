@@ -1,28 +1,27 @@
 <html><head>
 <title>Door Controller
 </title>
-<style>
-form {
-   display: inline;
-}
+<script type='text/javascript' src='static/jquery-1.11.0.min.js'></script>
+<script type='text/javascript' src='static/coop.js'></script>
+<style type='text/css' src='static/coop.css'</script>
 </style>
 </head><body>
 {{ page }}
-
+<div id='status'></div>
 <div>
-<form action='/stop' method='post'>
+<form class='inline' action='/stop' method='POST'>
 <input type='submit' value='Stop'>
 </form>
 
-<form action='/open' method='post'>
+<form class='inline' action='/open' method='POST'>
 <input type='submit' value='Open'>
 </form>
 
-<form action='/close' method='post'>
+<form class='inline' action='/close' method='POST'>
 <input type='submit' value='Close'>
 </form>
 
-<form action='/reload' method='post'>
+<form class='inline' action='/reload' method='POST'>
 <input type='submit' value='Reload'>
 </form>
 
