@@ -1,6 +1,7 @@
+
 /*
- * Door controller javascript. 
- * 
+ * Door controller javascript.
+ *
  */
 
 /* globals $
@@ -8,12 +9,13 @@
 
 
 
-var sock = window.WebSocket('ws:/status');
+var sock = new WebSocket('ws://'+ document.location.host + '/status');
 var elt = $('#status');
 
 if (sock) {
     sock.onopen = function () {
         elt.html('Connected! Awaiting status...');
+		sock.send('ping');
     };
     sock.onmessage = function (event) {
         elt.html(event.data);
@@ -21,9 +23,10 @@ if (sock) {
     sock.onclose = function () {
         elt.html('no data');
     };
-    sock.send('ping');
-} 
+
+}
 
 $('form.inline').submit(function(e){
     $.post(this.action);
+	return false;
 })
