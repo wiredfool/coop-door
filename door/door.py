@@ -126,8 +126,8 @@ class door(object):
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)        
             
             GPIO.add_interrupt_callback(pin,
-                                        getattr(self,name),
-                                        edge='rising',
+                                        self._ifhigh(getattr(self,name)),
+                                        edge='both',
                                         debounce_timeout_ms=100)
         if self.port:
             GPIO.add_tcp_callback(self.port, self.command_dispatch)
@@ -169,6 +169,7 @@ class door(object):
                 dbg("pin %s high, calling callback" %pin)
                 return cb(pin, *args, **kwargs)
             dbg("pin %s low, not calling" %pin)
+            self.notify_enrolled(self.status())
         return fn
 
     def reset_state(self):
