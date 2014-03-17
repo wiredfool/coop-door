@@ -14,11 +14,6 @@ app.debug = True
 
 @sockets.route('/status')
 def ws_status(ws):
-    print "starting websocket"
-    while True:
-        message = ws.receive()
-        ws.send(message)
-                    
     # UNDONE - 1-> many routing for the socket
     status_socket = client.status_socket()
     print "got status socket"
