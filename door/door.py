@@ -126,7 +126,8 @@ class door(object):
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)        
             
             GPIO.add_interrupt_callback(pin,
-                                        self._ifhigh(getattr(self,name)),
+                                        self._delay(0.05,
+                                                    self._ifhigh(getattr(self,name))),
                                         edge='both',
                                         debounce_timeout_ms=100)
         if self.port:
@@ -150,13 +151,13 @@ class door(object):
             GPIO.del_interrupt_callback(pin)
         GPIO.stop_waiting_for_interrupts()
 
-    def _debounce(self,delay, cb):
+    def _delay(self,delay, cb):
         """ Empirically determined that we need a delay to be able to read
             the value of an input after an edge trigger. This returns a delay
             function which then calls the callback """
 
         def fn(*args, **kwargs):
-            dbg("debounce %s" %args)
+            dbg("delay %s" % str(args))
             time.sleep(delay)
             return cb(*args, **kwargs)
         return fn
