@@ -302,7 +302,7 @@ class door(object):
 
     def err_close(self, *args, **kwargs):
         dbg('Err State, attempting to close')
-        if self.state == ERROR:
+        if self.state == ERROR and GPIO.input(inputs['upper']):
             self._state = ERROR_RECOVERY
             self._direction(UP)
             self._power(ON)
