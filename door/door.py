@@ -321,6 +321,7 @@ class door(object):
                 # Unjammed. give it a shot. Any switch will stop.
                 dbg('Unjammed, continuing to close by opening')
                 self.power(ON)
+                self.watchdog(10)
                 return True
         return False
 
