@@ -368,8 +368,9 @@ class door(object):
     def _watchdog(self, state, delay):
         time.sleep(delay)
         if self.state == state:
+            dbg('Watchdog killing operation %s after %s seconds' %(state, delay))
             self.stop()
-        
+            self.notify_enrolled(self.status())
 
 if __name__=='__main__':
     d = door(None, False, 8953)
