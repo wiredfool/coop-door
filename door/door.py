@@ -46,6 +46,7 @@ _RPIO._TCP_SOCKET_HOST = '127.0.0.1'
 
 import time
 import json
+import threading 
 
 import syslog
 
@@ -272,6 +273,7 @@ class door(object):
             self._direction(UP)
             self._power(ON)
             self.state = OPENING
+            self.watchdog(5.0)
             return True
         return False
 
@@ -283,6 +285,7 @@ class door(object):
             self._direction(DOWN)
             self._power(ON)
             self.state = CLOSING
+            self.watchdog(5.0)
             return True
         return False
 
@@ -355,6 +358,17 @@ class door(object):
             stat[name] = GPIO.input(pin)
         return json.dumps(stat)
 
+    #
+    # Safety
+    #
+    def watchdog(self, delay):
+        threading.Thread(target=self._watchdog, args=(self.state,delay)).start()
+
+    def _watchdog(self, state, delay):
+        time.sleep(delay)
+        if self.state == state:
+            self.stop()
+        
 
 if __name__=='__main__':
     d = door(None, False, 8953)
