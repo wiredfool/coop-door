@@ -27,16 +27,15 @@
       Opening: power is on, dpdt relay is set to up
       Closing: power is on, dpdt relay is set to down 
       Stopped: Neither limit switch is closed, power is off
-      Error: power is on, dpdt is set to down, and the upper 
-        limit switch has had an open/closed transition. Power
-        should be immediately turned off and requires manual 
-        intervention. 
+      Error: Door has jammed open when attempting to close.
 
    There are 3 operations:
       Up: opens the door.
       Down: closes the door.
       Stop: Stops the current operation. 
-      
+      Error: power was on, door is closing, and the upper 
+        limit switch has closed. Power should be immediately
+        turned off.
 """
 
 import RPIO as GPIO
@@ -55,7 +54,8 @@ def dbg(s):
     syslog.syslog(s)
 
 # States
-OPEN, CLOSED, OPENING, CLOSING, STOPPED, ERROR = 'open', 'closed', 'opening', 'closing', 'stopped', 'error'
+OPEN, CLOSED, OPENING, CLOSING, STOPPED, ERROR, DEAD, ERROR_RECOVERY = \
+    'open', 'closed', 'opening', 'closing', 'stopped', 'error', 'dead', 'error_recovery'
 # Events
 UP, DOWN, UPPER, LOWER = 'up', 'down', 'upper', 'lower' 
 # Power Control
@@ -87,17 +87,22 @@ class door(object):
         self.status_sockets = set()
         
         """ state: {Event:op} """
-        self.map = { OPEN:    { DOWN:  self.close, },
+        self.map = { OPEN:    { DOWN:  self.close,     },
                      CLOSING: { LOWER: self.stop, 
                                 UPPER: self.error,
-                                UP:    self.stop,  },
-                     CLOSED:  { UP:    self.open,  },
+                                UP:    self.stop,      },
+                     CLOSED:  { UP:    self.open,      },
                      OPENING: { UPPER: self.stop,
-                                DOWN:  self.stop, },
+                                DOWN:  self.stop,      },
                      STOPPED: { UP:    self.open, 
-                                DOWN:  self.close, },
-                     ERROR:   { UP:    self.open, 
-                                DOWN:  self.close, },
+                                DOWN:  self.close,     },
+                     ERROR:   { DOWN:  self.err_close,
+                                LOWER: self.stop,
+                                UPPER: self.stop,      },
+                     ERROR_RECOVERY: {
+                                LOWER: self.stop,
+                                UPPER: self.stop,      },
+                     DEAD:    {},                     
                      None:    {}
                      }
 
@@ -295,6 +300,30 @@ class door(object):
         self._direction(OFF)
         self.state = ERROR
 
+    def err_close(self, *args, **kwargs):
+        dbg('Err State, attempting to close')
+        if self.state == ERROR:
+            self._state = ERROR_RECOVERY
+            self._direction(UP)
+            self._power(ON)
+            time.sleep(0.25)
+            self._power(OFF)
+            if GPIO.input(inputs['upper']):
+                # still jammed. We're dead
+                dbg('Still jammed, dying')
+                self._direction(OFF)
+                self.state = DEAD
+                return False
+            else:
+                # Unjammed. give it a shot. Any switch will stop.
+                dbg('Unjammed, continuing to close by opening')
+                self.power(ON)
+                return True
+        return False
+
+    #
+    # Reporting command
+    #
     def enroll(self, socket=None,*args, **kwargs):
         "Adds the socket to the status broadcasts"
         dbg('Enrolling a socket: %s' %socket)
