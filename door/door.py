@@ -88,21 +88,21 @@ class door(object):
         self.status_sockets = set()
         
         """ state: {Event:op} """
-        self.map = { OPEN:    { DOWN:  self.close,     },
-                     CLOSING: { LOWER: self.stop, 
+        self.map = { OPEN:    { DOWN:  self.close, },
+                     CLOSING: { LOWER: self._delay(0.5, self.stop), 
                                 UPPER: self.error,
-                                UP:    self.stop,      },
-                     CLOSED:  { UP:    self.open,      },
+                                UP:    self.stop, },
+                     CLOSED:  { UP:    self.open, },
                      OPENING: { UPPER: self.stop,
-                                DOWN:  self.stop,      },
-                     STOPPED: { UP:    self.open, 
-                                DOWN:  self.close,     },
+                                DOWN:  self.stop, },
+                     STOPPED: { UP:    self.open,
+                                DOWN:  self.close, },
                      ERROR:   { DOWN:  self.err_close,
                                 LOWER: self.stop,
-                                UPPER: self.stop,      },
+                                UPPER: self.stop, },
                      ERROR_RECOVERY: {
                                 LOWER: self.stop,
-                                UPPER: self.stop,      },
+                                UPPER: self.stop, },
                      DEAD:    {},                     
                      None:    {}
                      }
