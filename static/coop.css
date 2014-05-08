@@ -2,3 +2,9 @@ form {
    display: inline;
 }
 
+
+
+g.closed, g.stopped, g.closing, g.opening, g.open, g.error, g.upper, g.lower { display: none; }
+
+.closed g.closed, .stopped g.stopped, .closing g.closing, .opening g.opening, 
+.open g.open, .error g.error, .upper g.upper, .lower g.lower { display: inline; }
