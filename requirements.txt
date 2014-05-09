@@ -1,3 +1,6 @@
-RPi.GPIO==0.5.2a
-web.py==0.37
+Flask==0.10.1
+Flask-Sockets==0.1
 RPIO==0.10.0
+RPi.GPIO==0.5.2a
+gunicorn==18.0
+
