@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# Schedule the door to close at the end of civil twilight, using the astral library. 
+
+
 import os
 from astral import Astral
 
@@ -11,7 +14,6 @@ astral.solar_depression = 'civil'
 city = astral[city_name]
 
 sun = city.sun(local=True)
-#print('Dusk:    %s' % sun['dusk'].strftime("%H:%M"))
 
 os.system("""echo '/usr/bin/python %s' | at %s""" % 
           (os.path.abspath('door/close.py'), sun['dusk'].strftime("%H:%M")))
