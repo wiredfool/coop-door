@@ -15,7 +15,9 @@ city = astral[city_name]
 
 sun = city.sun(local=True)
 
-os.system("""echo '%s %s' | at %s""" % 
-          (sys.executable, 
-           os.path.abspath('door/close.py'), 
-           sun['dusk'].strftime("%H:%M")))
+cmd = """echo '%s %s' | at %s""" % (sys.executable, 
+                                    os.path.abspath(os.path.join(os.path.dirname(__file__), 'door/close.py')), 
+                                    sun['dusk'].strftime("%H:%M"))
+         
+print cmd
+os.system(cmd)
